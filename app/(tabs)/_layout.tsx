@@ -7,6 +7,7 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { Background } from '@react-navigation/elements';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -29,15 +30,29 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Inicio',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Explorar',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="safari.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="myStories"
+        options={{
+          title: 'Mis Historias',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="book.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Perfil',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
     </Tabs>

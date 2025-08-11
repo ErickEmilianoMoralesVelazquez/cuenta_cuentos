@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "cuenta_cuentos",
+    "name": "Cuenta Cuentos",
     "slug": "cuenta_cuentos",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/icons/icon_mobile_remove.png",
     "scheme": "cuentacuentos",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
