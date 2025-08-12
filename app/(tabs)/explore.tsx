@@ -10,18 +10,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { ThemedText } from "@/components/ThemedText";
+import { router } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
-// Sample stories data
+// Agregamos storyKey para elegir el grafo en el player
 const stories = [
   {
     id: 1,
-    title: "El León y el Ratón",
+    title: "El Bosque Brillante",
     image:
-      "https://placehold.co/600x360/98FB98/FFFFFF?text=Tortuga+y+Liebre&font=montserrat&no_svg=1",
+      "https://placehold.co/600x360/98FB98/FFFFFF?text=Bosque+Brillante&font=montserrat&no_svg=1",
     duration: "3 min",
-    category: "Fábulas",
+    category: "Aventura",
+    storyKey: "forest", // <- mapea a constants/stories/index.ts
   },
   {
     id: 2,
@@ -30,6 +32,7 @@ const stories = [
       "https://placehold.co/600x360/98FB98/FFFFFF?text=Tortuga+y+Liebre&font=montserrat",
     duration: "3 min",
     category: "Fábulas",
+    storyKey: "forest", // por ahora reutilizamos el mismo grafo
   },
   {
     id: 3,
@@ -38,6 +41,7 @@ const stories = [
       "https://placehold.co/600x360/FFE4B5/FFFFFF?text=Tres+Cerditos&font=montserrat",
     duration: "3 min",
     category: "Cuentos",
+    storyKey: "forest",
   },
   {
     id: 4,
@@ -46,12 +50,17 @@ const stories = [
       "https://placehold.co/600x360/FFA07A/FFFFFF?text=Caperucita+Roja&font=montserrat",
     duration: "3 min",
     category: "Cuentos",
+    storyKey: "forest",
   },
 ];
 
 export default function Explore() {
+  const goPlay = (storyKey: string) => {
+    router.push({ pathname: "/story/player", params: { story: storyKey } });
+  };
+
   const renderStoryCard = ({ item }: { item: (typeof stories)[0] }) => (
-    <TouchableOpacity style={styles.storyCard}>
+    <TouchableOpacity style={styles.storyCard} onPress={() => goPlay(item.storyKey)}>
       <View style={styles.imageContainer}>
         <Image
           source={{ uri: item.image }}
@@ -72,7 +81,7 @@ export default function Explore() {
             <Text style={styles.metaText}>{item.category}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.playButton}>
+        <TouchableOpacity style={styles.playButton} onPress={() => goPlay(item.storyKey)}>
           <IconSymbol name="play.fill" size={20} color="#FFFFFF" />
           <Text style={styles.playButtonText}>Iniciar</Text>
         </TouchableOpacity>
@@ -103,14 +112,8 @@ export default function Explore() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#4ECDC4", // Mismo color del header para continuidad
-  },
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
+  safeArea: { flex: 1, backgroundColor: "#4ECDC4" },
+  container: { flex: 1, backgroundColor: "#F8F9FA" },
   header: {
     padding: 20,
     backgroundColor: "#4ECDC4",
@@ -118,21 +121,9 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    opacity: 0.9,
-  },
-  listContainer: {
-    padding: 20,
-    paddingBottom: 100, // Espacio extra para evitar que el último elemento se corte con la tab bar
-  },
+  headerTitle: { fontSize: 24, fontWeight: "bold", color: "#FFFFFF", marginBottom: 4 },
+  headerSubtitle: { fontSize: 16, color: "#FFFFFF", opacity: 0.9 },
+  listContainer: { padding: 20, paddingBottom: 100 },
   storyCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
@@ -144,39 +135,13 @@ const styles = StyleSheet.create({
     elevation: 5,
     overflow: "hidden",
   },
-  imageContainer: {
-    width: "100%",
-    height: 200,
-    backgroundColor: "#F0F0F0", // Color de fondo mientras carga
-    overflow: "hidden", // Asegura que la imagen no sobresalga
-  },
-  storyImage: {
-    width: "100%",
-    height: "100%",
-  },
-  storyInfo: {
-    padding: 20,
-  },
-  storyTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 12,
-  },
-  storyMeta: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 15,
-  },
-  metaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  metaText: {
-    fontSize: 14,
-    color: "#666",
-  },
+  imageContainer: { width: "100%", height: 200, backgroundColor: "#F0F0F0", overflow: "hidden" },
+  storyImage: { width: "100%", height: "100%" },
+  storyInfo: { padding: 20 },
+  storyTitle: { fontSize: 20, fontWeight: "bold", color: "#333", marginBottom: 12 },
+  storyMeta: { flexDirection: "row", justifyContent: "space-between", marginBottom: 15 },
+  metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  metaText: { fontSize: 14, color: "#666" },
   playButton: {
     backgroundColor: "#FF6B6B",
     flexDirection: "row",
@@ -186,9 +151,5 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     gap: 8,
   },
-  playButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
+  playButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "bold" },
 });
