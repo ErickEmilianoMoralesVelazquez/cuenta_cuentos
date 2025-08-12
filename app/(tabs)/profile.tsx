@@ -1,22 +1,77 @@
-import React from "react"
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from "react-native"
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { IconSymbol } from "@/components/ui/IconSymbol"
-import { useColorScheme } from "@/hooks/useColorScheme"
-import { router } from 'expo-router';
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { IconSymbol } from "@/components/ui/IconSymbol";
+import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+
+type LoadedUser = {
+  name: string;
+  email: string;
+  nickname?: string;
+};
+
+function formatJoinDateES(date: Date) {
+  const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  return `${meses[date.getMonth()]} ${date.getFullYear()}`;
+}
 
 export default function Profile() {
-  const userInfo = {
+  const [loading, setLoading] = useState(true);
+  const [userInfo, setUserInfo] = useState({
     name: "Pequeño Explorador",
     email: "explorador@mail.com",
     joinDate: "Agosto 2023",
-    alias: 'erick_velazzz'
+    alias: "explorador anónimo",
+  });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const rawUser = await SecureStore.getItemAsync("user");
+        const storedJoin = await SecureStore.getItemAsync("joinDate");
+
+        let joinDate = storedJoin ?? "";
+        if (!joinDate) {
+          // Primera vez que entra al perfil: fija y persiste el joinDate
+          joinDate = formatJoinDateES(new Date());
+          await SecureStore.setItemAsync("joinDate", joinDate);
+        }
+
+        if (rawUser) {
+          const u: LoadedUser = JSON.parse(rawUser);
+          setUserInfo({
+            name: u.name,
+            email: u.email,
+            alias: u.nickname ?? "sin_alias",
+            joinDate,
+          });
+        } else {
+          // Si no hay usuario guardado, opcionalmente redirigir a login
+          // router.replace("/(auth)/login");
+        }
+      } catch (e) {
+        // En caso de error, mantenemos los valores por defecto
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+       <SafeAreaView style={styles.safeArea} edges={['top']}>
+         <View style={[styles.container, { alignItems: "center", justifyContent: "center" }]}>
+           <Text>Cargando perfil…</Text>
+         </View>
+       </SafeAreaView>
+    );
   }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView 
-        style={styles.container} 
+      <ScrollView
+        style={styles.container}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -30,7 +85,7 @@ export default function Profile() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información Personal</Text>
-          
+
           <View style={styles.infoItem}>
             <View style={styles.settingInfo}>
               <IconSymbol name="person" size={24} color="#666" />
@@ -63,12 +118,13 @@ export default function Profile() {
         </View>
 
         <View style={[styles.section, styles.logoutSection]}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.settingButton, styles.logoutButton]}
-            onPress={() => {
-              // Aquí puedes agregar la lógica para limpiar el estado de la aplicación
-              // Por ejemplo, limpiar el token de autenticación, datos del usuario, etc.
-              router.replace('/(auth)/login');
+            onPress={async () => {
+              await SecureStore.deleteItemAsync("token");
+              await SecureStore.deleteItemAsync("user");
+              await SecureStore.deleteItemAsync("joinDate");
+              router.replace("/(auth)/login");
             }}
           >
             <IconSymbol name="rectangle.portrait.and.arrow.right" size={24} color="#FF6B6B" />
@@ -77,20 +133,20 @@ export default function Profile() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#4ECDC4", // Mismo color del header para continuidad
+    backgroundColor: "#4ECDC4",
   },
   container: {
     flex: 1,
     backgroundColor: "#F8F9FA",
   },
   scrollContent: {
-    paddingBottom: 120, // Espacio suficiente para scroll completo y tab bar
+    paddingBottom: 120,
     flexGrow: 1,
   },
   header: {
@@ -119,33 +175,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     opacity: 0.9,
   },
-  statsContainer: {
-    flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    margin: 20,
-    borderRadius: 15,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FF6B6B",
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: "#666",
-    textAlign: "center",
-  },
   section: {
     marginHorizontal: 20,
     marginBottom: 20,
@@ -156,20 +185,6 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 15,
     marginTop: 20,
-  },
-  settingItem: {
-    backgroundColor: "#FFFFFF",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   settingButton: {
     backgroundColor: "#FFFFFF",
@@ -228,4 +243,4 @@ const styles = StyleSheet.create({
   logoutText: {
     color: "#FF6B6B",
   },
-})
+});

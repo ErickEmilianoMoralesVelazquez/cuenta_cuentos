@@ -10,16 +10,19 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  TouchableOpacity, // 👈 nuevo
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import { Link, router } from "expo-router";
 import Animated, { FadeInUp } from "react-native-reanimated";
+import * as SecureStore from "expo-secure-store";
 
 import { FormInput } from "@/components/auth/FormInput";
 import { Button } from "@/components/auth/Button";
 import { ThemedText } from "@/components/ThemedText";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { IconSymbol } from "@/components/ui/IconSymbol"; // 👈 nuevo
 
 interface LoginForm {
   email: string;
@@ -33,6 +36,7 @@ export default function Login() {
   });
   const [errors, setErrors] = useState<Partial<LoginForm>>({});
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // 👈 nuevo
 
   const backgroundColor = useThemeColor({}, "background");
   const baseURL = "https://0c798da609b4.ngrok-free.app";
@@ -58,21 +62,17 @@ export default function Login() {
         body: JSON.stringify(formData),
       });
 
-      const contentType = res.headers.get("content-type") || "";
-      const data = contentType.includes("application/json")
-        ? await res.json()
-        : await res.text();
+      const data = await res.json();
 
       if (!res.ok) {
-        // si el backend manda {message: "..."} o {error: "..."}
         const msg =
           (typeof data === "object" && (data.message || data.error)) ||
-          (typeof data === "string" ? data : "Credenciales inválidas");
+          "Credenciales inválidas";
         throw new Error(msg);
       }
 
-      // Si tu API regresa token y/o usuario, puedes guardarlo aquí:
-    //   await SecureStore.setItemAsync("token", data.token);
+      await SecureStore.setItemAsync("token", data.token);
+      await SecureStore.setItemAsync("user", JSON.stringify(data.user));
 
       Alert.alert("¡Bienvenido!", "Inicio de sesión exitoso.");
       router.replace("/(tabs)");
@@ -125,7 +125,17 @@ export default function Login() {
                   setFormData({ ...formData, password: text })
                 }
                 error={errors.password}
-                secureTextEntry
+                secureTextEntry={!showPassword} // 👈 cambia según estado
+                rightIcon={
+                  // 👈 icono al final del input
+                  <TouchableOpacity onPress={() => setShowPassword((v) => !v)}>
+                    <IconSymbol
+                      name={showPassword ? "eye.slash" : "eye"}
+                      size={20}
+                      color="#666"
+                    />
+                  </TouchableOpacity>
+                }
               />
 
               <Button

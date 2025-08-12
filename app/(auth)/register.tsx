@@ -8,11 +8,13 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  TouchableOpacity
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, { FadeInUp, FadeOutDown } from "react-native-reanimated";
 import { useState } from "react";
 import { router } from "expo-router";
+import { IconSymbol } from "@/components/ui/IconSymbol";
 
 import { FormInput } from "@/components/auth/FormInput";
 import { Button } from "@/components/auth/Button";
@@ -38,11 +40,11 @@ export default function Register() {
   });
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // ✅ mover hook aquí
 
   const backgroundColor = useThemeColor({}, "background");
 
-  // Base URL según el entorno de emulador
-  const baseURL = 'https://0c798da609b4.ngrok-free.app' // <-- si usas dispositivo físico, pon aquí tu IP local
+  const baseURL = "https://0c798da609b4.ngrok-free.app";
 
   const validateStep = () => {
     const newErrors: Partial<FormData> = {};
@@ -89,15 +91,12 @@ export default function Register() {
         : await res.text();
 
       if (!res.ok) {
-        // Si el backend envía errores por campo: { errors: { email: "ya existe" } }
-        if (typeof data === "object" && data?.errors) {
-          setErrors((prev) => ({ ...prev, ...data.errors }));
+        if (typeof data === "object" && (data as any)?.errors) {
+          setErrors((prev) => ({ ...prev, ...(data as any).errors }));
         }
         const msg =
-          (typeof data === "object" && (data.message || data.error)) ||
-          (typeof data === "string"
-            ? data
-            : "No se pudo completar el registro");
+          (typeof data === "object" && ((data as any).message || (data as any).error)) ||
+          (typeof data === "string" ? data : "No se pudo completar el registro");
         throw new Error(msg);
       }
 
@@ -169,6 +168,7 @@ export default function Register() {
             style={styles.step}
           >
             <ThemedText style={styles.title}>Datos de acceso</ThemedText>
+
             <FormInput
               label="Correo electrónico"
               value={formData.email}
@@ -178,6 +178,7 @@ export default function Register() {
               autoCapitalize="none"
               autoFocus
             />
+
             <FormInput
               label="Contraseña"
               value={formData.password}
@@ -185,7 +186,16 @@ export default function Register() {
                 setFormData({ ...formData, password: text })
               }
               error={errors.password}
-              secureTextEntry
+              secureTextEntry={!showPassword}
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowPassword((v) => !v)}>
+                  <IconSymbol
+                    name={showPassword ? "eye.slash" : "eye"}
+                    size={20}
+                    color="#666"
+                  />
+                </TouchableOpacity>
+              }
             />
           </Animated.View>
         );
