@@ -6,14 +6,11 @@ import { useColorScheme } from "@/hooks/useColorScheme"
 import { router } from 'expo-router';
 
 export default function Profile() {
-  const [darkMode, setDarkMode] = React.useState(false)
-  const [notifications, setNotifications] = React.useState(true)
-  const colorScheme = useColorScheme()
-
-  const userStats = {
-    storiesListened: 12,
-    favoriteStories: 5,
-    totalTime: "2h 30min",
+  const userInfo = {
+    name: "Pequeño Explorador",
+    email: "explorador@mail.com",
+    joinDate: "Agosto 2023",
+    alias: 'erick_velazzz'
   }
 
   return (
@@ -27,81 +24,42 @@ export default function Profile() {
           <View style={styles.avatar}>
             <IconSymbol name="person.fill" size={40} color="#FFFFFF" />
           </View>
-          <Text style={styles.userName}>Pequeño Explorador</Text>
-          <Text style={styles.userSubtitle}>¡Sigue explorando historias!</Text>
-        </View>
-
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{userStats.storiesListened}</Text>
-            <Text style={styles.statLabel}>Historias Escuchadas</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{userStats.favoriteStories}</Text>
-            <Text style={styles.statLabel}>Favoritas</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{userStats.totalTime}</Text>
-            <Text style={styles.statLabel}>Tiempo Total</Text>
-          </View>
+          <Text style={styles.userName}>{userInfo.name}</Text>
+          <Text style={styles.userSubtitle}>¡Bienvenido!</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Configuración</Text>
-
-          <View style={styles.settingItem}>
+          <Text style={styles.sectionTitle}>Información Personal</Text>
+          
+          <View style={styles.infoItem}>
             <View style={styles.settingInfo}>
-              <IconSymbol name="moon" size={24} color="#666" />
-              <Text style={styles.settingText}>Modo Oscuro</Text>
+              <IconSymbol name="person" size={24} color="#666" />
+              <View>
+                <Text style={styles.infoLabel}>Alias</Text>
+                <Text style={styles.infoValue}>{userInfo.alias}</Text>
+              </View>
             </View>
-            <Switch
-              value={darkMode}
-              onValueChange={setDarkMode}
-              trackColor={{ false: "#E0E0E0", true: "#4ECDC4" }}
-              thumbColor={darkMode ? "#FFFFFF" : "#FFFFFF"}
-            />
           </View>
 
-          <View style={styles.settingItem}>
+          <View style={styles.infoItem}>
             <View style={styles.settingInfo}>
-              <IconSymbol name="bell" size={24} color="#666" />
-              <Text style={styles.settingText}>Notificaciones</Text>
+              <IconSymbol name="envelope" size={24} color="#666" />
+              <View>
+                <Text style={styles.infoLabel}>Correo Electrónico</Text>
+                <Text style={styles.infoValue}>{userInfo.email}</Text>
+              </View>
             </View>
-            <Switch
-              value={notifications}
-              onValueChange={setNotifications}
-              trackColor={{ false: "#E0E0E0", true: "#4ECDC4" }}
-              thumbColor={notifications ? "#FFFFFF" : "#FFFFFF"}
-            />
           </View>
 
-          <TouchableOpacity style={styles.settingButton}>
-            <IconSymbol name="speaker.wave.2" size={24} color="#666" />
-            <Text style={styles.settingText}>Control de Volumen</Text>
-            <IconSymbol name="chevron.right" size={20} color="#CCC" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingButton}>
-            <IconSymbol name="timer" size={24} color="#666" />
-            <Text style={styles.settingText}>Temporizador de Sueño</Text>
-            <IconSymbol name="chevron.right" size={20} color="#CCC" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ayuda y Soporte</Text>
-
-          <TouchableOpacity style={styles.settingButton}>
-            <IconSymbol name="questionmark.circle" size={24} color="#666" />
-            <Text style={styles.settingText}>Ayuda</Text>
-            <IconSymbol name="chevron.right" size={20} color="#CCC" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingButton}>
-            <IconSymbol name="envelope" size={24} color="#666" />
-            <Text style={styles.settingText}>Contactar Soporte</Text>
-            <IconSymbol name="chevron.right" size={20} color="#CCC" />
-          </TouchableOpacity>
+          <View style={styles.infoItem}>
+            <View style={styles.settingInfo}>
+              <IconSymbol name="calendar" size={24} color="#666" />
+              <View>
+                <Text style={styles.infoLabel}>Miembro desde</Text>
+                <Text style={styles.infoValue}>{userInfo.joinDate}</Text>
+              </View>
+            </View>
+          </View>
         </View>
 
         <View style={[styles.section, styles.logoutSection]}>
@@ -197,6 +155,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     marginBottom: 15,
+    marginTop: 20,
   },
   settingItem: {
     backgroundColor: "#FFFFFF",
@@ -236,8 +195,32 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     flex: 1,
   },
+  infoItem: {
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: "#666",
+    marginLeft: 15,
+  },
+  infoValue: {
+    fontSize: 16,
+    color: "#333",
+    marginLeft: 15,
+    fontWeight: "500",
+  },
   logoutSection: {
-    marginTop: 20,
+    marginTop: 40,
   },
   logoutButton: {
     backgroundColor: "#FFF0F0",

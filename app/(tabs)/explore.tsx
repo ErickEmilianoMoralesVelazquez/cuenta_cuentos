@@ -1,47 +1,65 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from "react-native"
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
-import { IconSymbol } from "@/components/ui/IconSymbol"
-import { ThemedText } from '@/components/ThemedText';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Image } from "expo-image";
+import { IconSymbol } from "@/components/ui/IconSymbol";
+import { ThemedText } from "@/components/ThemedText";
 
-const { width } = Dimensions.get("window")
+const { width } = Dimensions.get("window");
 
 // Sample stories data
 const stories = [
   {
     id: 1,
     title: "El León y el Ratón",
-    image: "https://via.placeholder.com/300x200/FFB6C1/FFFFFF?text=León+y+Ratón",
-    duration: "5 min",
+    image:
+      "https://placehold.co/600x360/98FB98/FFFFFF?text=Tortuga+y+Liebre&font=montserrat&no_svg=1",
+    duration: "3 min",
     category: "Fábulas",
   },
   {
     id: 2,
     title: "La Tortuga y la Liebre",
-    image: "https://via.placeholder.com/300x200/98FB98/FFFFFF?text=Tortuga+Liebre",
-    duration: "4 min",
+    image:
+      "https://placehold.co/600x360/98FB98/FFFFFF?text=Tortuga+y+Liebre&font=montserrat",
+    duration: "3 min",
     category: "Fábulas",
   },
   {
     id: 3,
     title: "Los Tres Cerditos",
-    image: "https://via.placeholder.com/300x200/FFE4B5/FFFFFF?text=Tres+Cerditos",
-    duration: "6 min",
+    image:
+      "https://placehold.co/600x360/FFE4B5/FFFFFF?text=Tres+Cerditos&font=montserrat",
+    duration: "3 min",
     category: "Cuentos",
   },
   {
     id: 4,
     title: "Caperucita Roja",
-    image: "https://via.placeholder.com/300x200/FFA07A/FFFFFF?text=Caperucita",
-    duration: "7 min",
+    image:
+      "https://placehold.co/600x360/FFA07A/FFFFFF?text=Caperucita+Roja&font=montserrat",
+    duration: "3 min",
     category: "Cuentos",
   },
-]
+];
 
 export default function Explore() {
   const renderStoryCard = ({ item }: { item: (typeof stories)[0] }) => (
     <TouchableOpacity style={styles.storyCard}>
-      <Image source={{ uri: item.image }} style={styles.storyImage} contentFit="cover" />
+      <View style={styles.imageContainer}>
+        <Image
+          source={{ uri: item.image }}
+          style={styles.storyImage}
+          contentFit="cover"
+          transition={200}
+        />
+      </View>
       <View style={styles.storyInfo}>
         <ThemedText style={styles.storyTitle}>{item.title}</ThemedText>
         <View style={styles.storyMeta}>
@@ -56,18 +74,20 @@ export default function Explore() {
         </View>
         <TouchableOpacity style={styles.playButton}>
           <IconSymbol name="play.fill" size={20} color="#FFFFFF" />
-          <Text style={styles.playButtonText}>Escuchar</Text>
+          <Text style={styles.playButtonText}>Iniciar</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
-  )
+  );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.container}>
         <View style={styles.header}>
           <ThemedText style={styles.headerTitle}>Explora Historias</ThemedText>
-          <ThemedText style={styles.headerSubtitle}>Descubre nuevas aventuras</ThemedText>
+          <ThemedText style={styles.headerSubtitle}>
+            Descubre nuevas aventuras
+          </ThemedText>
         </View>
 
         <FlatList
@@ -79,7 +99,7 @@ export default function Explore() {
         />
       </View>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -95,6 +115,8 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#4ECDC4",
     alignItems: "center",
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   headerTitle: {
     fontSize: 24,
@@ -122,9 +144,15 @@ const styles = StyleSheet.create({
     elevation: 5,
     overflow: "hidden",
   },
+  imageContainer: {
+    width: "100%",
+    height: 200,
+    backgroundColor: "#F0F0F0", // Color de fondo mientras carga
+    overflow: "hidden", // Asegura que la imagen no sobresalga
+  },
   storyImage: {
     width: "100%",
-    height: 150,
+    height: "100%",
   },
   storyInfo: {
     padding: 20,
