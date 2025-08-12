@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { router } from "expo-router";
@@ -12,7 +18,20 @@ type LoadedUser = {
 };
 
 function formatJoinDateES(date: Date) {
-  const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const meses = [
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
+  ];
   return `${meses[date.getMonth()]} ${date.getFullYear()}`;
 }
 
@@ -60,29 +79,33 @@ export default function Profile() {
 
   if (loading) {
     return (
-       <SafeAreaView style={styles.safeArea} edges={['top']}>
-         <View style={[styles.container, { alignItems: "center", justifyContent: "center" }]}>
-           <Text>Cargando perfil…</Text>
-         </View>
-       </SafeAreaView>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <View
+          style={[
+            styles.container,
+            { alignItems: "center", justifyContent: "center" },
+          ]}
+        >
+          <Text>Cargando perfil…</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <View style={styles.header}>
+        <View style={styles.avatar}>
+          <IconSymbol name="person.fill" size={40} color="#FFFFFF" />
+        </View>
+        <Text style={styles.userName}>{userInfo.name}</Text>
+        {/* <Text style={styles.userSubtitle}>¡Bienvenido!</Text> */}
+      </View>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <View style={styles.avatar}>
-            <IconSymbol name="person.fill" size={40} color="#FFFFFF" />
-          </View>
-          <Text style={styles.userName}>{userInfo.name}</Text>
-          <Text style={styles.userSubtitle}>¡Bienvenido!</Text>
-        </View>
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información Personal</Text>
 
@@ -127,8 +150,14 @@ export default function Profile() {
               router.replace("/(auth)/login");
             }}
           >
-            <IconSymbol name="rectangle.portrait.and.arrow.right" size={24} color="#FF6B6B" />
-            <Text style={[styles.settingText, styles.logoutText]}>Cerrar Sesión</Text>
+            <IconSymbol
+              name="rectangle.portrait.and.arrow.right"
+              size={24}
+              color="#FF6B6B"
+            />
+            <Text style={[styles.settingText, styles.logoutText]}>
+              Cerrar Sesión
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -18,7 +18,7 @@ export default function HomeScreen() {
   const featuredStory = {
     id: 1,
     title: "El León y el Ratón",
-    image: "https://i.imgur.com/umenVQ5.png",
+    image: "https://www.chiquipedia.com/imagenes/el-raton-y-el-leon.jpg",
     description: "Una historia sobre la amistad y la ayuda mutua",
     storyKey: "leon_raton",
   };

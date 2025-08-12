@@ -44,7 +44,7 @@ export default function Register() {
 
   const backgroundColor = useThemeColor({}, "background");
 
-  const baseURL = "https://e5cb1d44855b.ngrok-free.app";
+  const baseURL = "https://96e3458c9b70.ngrok-free.app";
 
   const validateStep = () => {
     const newErrors: Partial<FormData> = {};

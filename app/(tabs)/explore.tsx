@@ -19,37 +19,37 @@ const stories = [
   {
     id: 1,
     title: "El Bosque Brillante",
-    image: "https://i.imgur.com/umenVQ5.png",
+    image: "https://img.lovepik.com/photo/60178/0375.jpg_wh860.jpg",
     duration: "3 min",
     category: "Aventura",
     storyKey: "forest", // <- mapea a constants/stories/index.ts
   },
   {
     id: 2,
-    title: "La Tortuga y la Liebre",
+    title: "El león y el ratón",
     image:
-      "",
+      "https://www.chiquipedia.com/imagenes/el-raton-y-el-leon.jpg",
     duration: "3 min",
     category: "Fábulas",
     storyKey: "leon_raton", // por ahora reutilizamos el mismo grafo
   },
   {
     id: 3,
-    title: "Los Tres Cerditos",
+    title: "Nave espacial",
     image:
-      "",
+      "https://img.freepik.com/fotos-premium/escena-ciencia-ficcion-que-muestra-nave-espacial-secuestrando-humano-pintura-ilustracion-nocturna_37402-1798.jpg",
     duration: "3 min",
-    category: "Cuentos",
-    storyKey: "forest",
+    category: "Ficción",
+    storyKey: "three",
   },
   {
     id: 4,
-    title: "Caperucita Roja",
+    title: "Misterio urbano",
     image:
-      "",
+      "https://i.pinimg.com/originals/f3/87/5b/f3875b2d671f41c997e053e4a7cfe60c.png",
     duration: "3 min",
-    category: "Cuentos",
-    storyKey: "forest",
+    category: "Misterio",
+    storyKey: "two",
   },
 ];
 

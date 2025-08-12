@@ -1,6 +1,10 @@
-import { StyleSheet, View } from "react-native";
-import LottieView from "lottie-react-native";
+import { StyleSheet, View, Platform } from "react-native";
 import { useCallback } from "react";
+
+let LottieView: any = null;
+if (Platform.OS !== "web") {
+  LottieView = require("lottie-react-native").default;
+}
 
 interface CustomSplashScreenProps {
   onAnimationFinish?: () => void;
@@ -10,9 +14,14 @@ export default function CustomSplashScreen({
   onAnimationFinish,
 }: CustomSplashScreenProps) {
   const handleAnimationFinish = useCallback(() => {
-    console.log('Lottie animation finished'); // Para debug
+    console.log("Lottie animation finished");
     onAnimationFinish?.();
   }, [onAnimationFinish]);
+
+  // Si es web, no renderiza la animación
+  if (Platform.OS === "web") {
+    return <View style={styles.container} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -36,7 +45,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#F3E8FF",
   },
-  
+
   animation: {
     width: 350,
     height: 350,
