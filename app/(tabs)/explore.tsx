@@ -19,8 +19,7 @@ const stories = [
   {
     id: 1,
     title: "El Bosque Brillante",
-    image:
-      "https://placehold.co/600x360/98FB98/FFFFFF?text=Bosque+Brillante&font=montserrat&no_svg=1",
+    image: "https://i.imgur.com/umenVQ5.png",
     duration: "3 min",
     category: "Aventura",
     storyKey: "forest", // <- mapea a constants/stories/index.ts
@@ -29,16 +28,16 @@ const stories = [
     id: 2,
     title: "La Tortuga y la Liebre",
     image:
-      "https://placehold.co/600x360/98FB98/FFFFFF?text=Tortuga+y+Liebre&font=montserrat",
+      "",
     duration: "3 min",
     category: "Fábulas",
-    storyKey: "forest", // por ahora reutilizamos el mismo grafo
+    storyKey: "leon_raton", // por ahora reutilizamos el mismo grafo
   },
   {
     id: 3,
     title: "Los Tres Cerditos",
     image:
-      "https://placehold.co/600x360/FFE4B5/FFFFFF?text=Tres+Cerditos&font=montserrat",
+      "",
     duration: "3 min",
     category: "Cuentos",
     storyKey: "forest",
@@ -47,12 +46,28 @@ const stories = [
     id: 4,
     title: "Caperucita Roja",
     image:
-      "https://placehold.co/600x360/FFA07A/FFFFFF?text=Caperucita+Roja&font=montserrat",
+      "",
     duration: "3 min",
     category: "Cuentos",
     storyKey: "forest",
   },
 ];
+
+const palette = [
+  "#FEE2E2",
+  "#DBEAFE",
+  "#DCFCE7",
+  "#FEF9C3",
+  "#E9D5FF",
+  "#FFD6E7",
+  "#D1FAE5",
+  "#FDE68A",
+];
+
+const pickColor = (key: string) => {
+  const sum = [...(key || "x")].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return palette[Math.abs(sum) % palette.length];
+};
 
 export default function Explore() {
   const goPlay = (storyKey: string) => {
@@ -60,34 +75,57 @@ export default function Explore() {
   };
 
   const renderStoryCard = ({ item }: { item: (typeof stories)[0] }) => (
-    <TouchableOpacity style={styles.storyCard} onPress={() => goPlay(item.storyKey)}>
-      <View style={styles.imageContainer}>
+  <TouchableOpacity
+    style={styles.storyCard}
+    onPress={() => goPlay(item.storyKey)}
+  >
+    <View
+      style={[
+        styles.imageContainer,
+        !item.image && { backgroundColor: pickColor(item.storyKey || item.title) }
+      ]}
+    >
+      {item.image ? (
         <Image
           source={{ uri: item.image }}
           style={styles.storyImage}
           contentFit="cover"
           transition={200}
         />
-      </View>
-      <View style={styles.storyInfo}>
-        <ThemedText style={styles.storyTitle}>{item.title}</ThemedText>
-        <View style={styles.storyMeta}>
-          <View style={styles.metaItem}>
-            <IconSymbol name="clock" size={16} color="#666" />
-            <Text style={styles.metaText}>{item.duration}</Text>
-          </View>
-          <View style={styles.metaItem}>
-            <IconSymbol name="bookmark" size={16} color="#666" />
-            <Text style={styles.metaText}>{item.category}</Text>
-          </View>
+      ) : null}
+    </View>
+
+    <View style={styles.storyInfo}>
+      <ThemedText style={styles.storyTitle}>{item.title}</ThemedText>
+      <View style={styles.storyMeta}>
+        <View style={styles.metaItem}>
+          <IconSymbol name="clock" size={16} color="#666" />
+          <Text style={styles.metaText}>{item.duration}</Text>
         </View>
-        <TouchableOpacity style={styles.playButton} onPress={() => goPlay(item.storyKey)}>
-          <IconSymbol name="play.fill" size={20} color="#FFFFFF" />
-          <Text style={styles.playButtonText}>Iniciar</Text>
-        </TouchableOpacity>
+        <View style={styles.metaItem}>
+          <IconSymbol name="bookmark" size={16} color="#666" />
+          <Text style={styles.metaText}>{item.category}</Text>
+        </View>
       </View>
-    </TouchableOpacity>
-  );
+      <TouchableOpacity
+        style={styles.playButton}
+        onPress={() =>
+          router.push({
+            pathname: "/story/player",
+            params: {
+              story: item.storyKey,
+              title: item.title,
+              image: item.image,
+            },
+          })
+        }
+      >
+        <IconSymbol name="play.fill" size={20} color="#FFFFFF" />
+        <Text style={styles.playButtonText}>Iniciar</Text>
+      </TouchableOpacity>
+    </View>
+  </TouchableOpacity>
+);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -121,7 +159,12 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
-  headerTitle: { fontSize: 24, fontWeight: "bold", color: "#FFFFFF", marginBottom: 4 },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
   headerSubtitle: { fontSize: 16, color: "#FFFFFF", opacity: 0.9 },
   listContainer: { padding: 20, paddingBottom: 100 },
   storyCard: {
@@ -135,11 +178,25 @@ const styles = StyleSheet.create({
     elevation: 5,
     overflow: "hidden",
   },
-  imageContainer: { width: "100%", height: 200, backgroundColor: "#F0F0F0", overflow: "hidden" },
+  imageContainer: {
+    width: "100%",
+    height: 200,
+    backgroundColor: "#F0F0F0",
+    overflow: "hidden",
+  },
   storyImage: { width: "100%", height: "100%" },
   storyInfo: { padding: 20 },
-  storyTitle: { fontSize: 20, fontWeight: "bold", color: "#333", marginBottom: 12 },
-  storyMeta: { flexDirection: "row", justifyContent: "space-between", marginBottom: 15 },
+  storyTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 12,
+  },
+  storyMeta: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 15,
+  },
   metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
   metaText: { fontSize: 14, color: "#666" },
   playButton: {

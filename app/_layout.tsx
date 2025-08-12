@@ -39,8 +39,8 @@ export default function RootLayout() {
     setIsLoading(false);
     // Redirigir a la pantalla de registro después de un pequeño delay
     setTimeout(() => {
-      router.replace('/(auth)/login');
-      // router.replace('/');
+      // router.replace('/(auth)/login');
+      router.replace('/');
     }, 100);
   }, []);
 
