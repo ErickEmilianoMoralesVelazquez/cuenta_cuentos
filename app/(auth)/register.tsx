@@ -1,13 +1,23 @@
-import { StyleSheet, View, Keyboard, TouchableWithoutFeedback, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
-import { useState } from 'react';
-import { router } from 'expo-router';
+import {
+  StyleSheet,
+  View,
+  Keyboard,
+  TouchableWithoutFeedback,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Animated, { FadeInUp, FadeOutDown } from "react-native-reanimated";
+import { useState } from "react";
+import { router } from "expo-router";
 
-import { FormInput } from '@/components/auth/FormInput';
-import { Button } from '@/components/auth/Button';
-import { ThemedText } from '@/components/ThemedText';
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { FormInput } from "@/components/auth/FormInput";
+import { Button } from "@/components/auth/Button";
+import { ThemedText } from "@/components/ThemedText";
+import { useThemeColor } from "@/hooks/useThemeColor";
 
 interface FormData {
   name: string;
@@ -20,46 +30,43 @@ interface FormData {
 export default function Register() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    age: '',
-    email: '',
-    password: '',
-    nickname: '',
+    name: "",
+    age: "",
+    email: "",
+    password: "",
+    nickname: "",
   });
   const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [loading, setLoading] = useState(false);
 
-  const backgroundColor = useThemeColor({}, 'background');
+  const backgroundColor = useThemeColor({}, "background");
+
+  // Base URL según el entorno de emulador
+  const baseURL = 'https://0c798da609b4.ngrok-free.app' // <-- si usas dispositivo físico, pon aquí tu IP local
 
   const validateStep = () => {
     const newErrors: Partial<FormData> = {};
 
     switch (step) {
       case 1:
-        if (!formData.name) {
-          newErrors.name = 'El nombre es requerido';
-        }
+        if (!formData.name) newErrors.name = "El nombre es requerido";
         break;
       case 2:
-        if (!formData.age || isNaN(Number(formData.age))) {
-          newErrors.age = 'Ingresa una edad válida';
-        }
+        if (!formData.age || isNaN(Number(formData.age)))
+          newErrors.age = "Ingresa una edad válida";
         break;
       case 3:
-        if (!formData.email) {
-          newErrors.email = 'El correo es requerido';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-          newErrors.email = 'Ingresa un correo válido';
-        }
-        if (!formData.password) {
-          newErrors.password = 'La contraseña es requerida';
-        } else if (formData.password.length < 6) {
-          newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
-        }
+        if (!formData.email) newErrors.email = "El correo es requerido";
+        else if (!/\S+@\S+\.\S+/.test(formData.email))
+          newErrors.email = "Ingresa un correo válido";
+        if (!formData.password)
+          newErrors.password = "La contraseña es requerida";
+        else if (formData.password.length < 6)
+          newErrors.password = "La contraseña debe tener al menos 6 caracteres";
         break;
       case 4:
-        if (!formData.nickname) {
-          newErrors.nickname = 'El sobrenombre es requerido';
-        }
+        if (!formData.nickname)
+          newErrors.nickname = "El sobrenombre es requerido";
         break;
     }
 
@@ -67,30 +74,62 @@ export default function Register() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
-    if (validateStep()) {
-      if (step < 4) {
-        setStep(step + 1);
-      } else {
-        // Aquí iría la lógica para enviar los datos al servidor
-        console.log('Datos del formulario:', formData);
-        router.replace('/login');
+  const registerUser = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${baseURL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, age: Number(formData.age) }),
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await res.json()
+        : await res.text();
+
+      if (!res.ok) {
+        // Si el backend envía errores por campo: { errors: { email: "ya existe" } }
+        if (typeof data === "object" && data?.errors) {
+          setErrors((prev) => ({ ...prev, ...data.errors }));
+        }
+        const msg =
+          (typeof data === "object" && (data.message || data.error)) ||
+          (typeof data === "string"
+            ? data
+            : "No se pudo completar el registro");
+        throw new Error(msg);
       }
+
+      Alert.alert("¡Cuenta creada!", "Tu registro fue exitoso.");
+      router.replace("/login");
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "No se pudo registrar.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNext = async () => {
+    if (!validateStep()) return;
+
+    if (step < 4) {
+      setStep(step + 1);
+    } else {
+      await registerUser();
     }
   };
 
   const handleBack = () => {
-    if (step > 1) {
-      setStep(step - 1);
-    }
+    if (step > 1 && !loading) setStep(step - 1);
   };
 
   const renderStep = () => {
     switch (step) {
       case 1:
         return (
-          <Animated.View 
-            entering={FadeInUp} 
+          <Animated.View
+            entering={FadeInUp}
             exiting={FadeOutDown}
             style={styles.step}
           >
@@ -106,8 +145,8 @@ export default function Register() {
         );
       case 2:
         return (
-          <Animated.View 
-            entering={FadeInUp} 
+          <Animated.View
+            entering={FadeInUp}
             exiting={FadeOutDown}
             style={styles.step}
           >
@@ -124,8 +163,8 @@ export default function Register() {
         );
       case 3:
         return (
-          <Animated.View 
-            entering={FadeInUp} 
+          <Animated.View
+            entering={FadeInUp}
             exiting={FadeOutDown}
             style={styles.step}
           >
@@ -142,7 +181,9 @@ export default function Register() {
             <FormInput
               label="Contraseña"
               value={formData.password}
-              onChangeText={(text) => setFormData({ ...formData, password: text })}
+              onChangeText={(text) =>
+                setFormData({ ...formData, password: text })
+              }
               error={errors.password}
               secureTextEntry
             />
@@ -150,16 +191,20 @@ export default function Register() {
         );
       case 4:
         return (
-          <Animated.View 
-            entering={FadeInUp} 
+          <Animated.View
+            entering={FadeInUp}
             exiting={FadeOutDown}
             style={styles.step}
           >
-            <ThemedText style={styles.title}>¿Cómo te gustaría que te llamemos?</ThemedText>
+            <ThemedText style={styles.title}>
+              ¿Cómo te gustaría que te llamemos?
+            </ThemedText>
             <FormInput
               label="Sobrenombre"
               value={formData.nickname}
-              onChangeText={(text) => setFormData({ ...formData, nickname: text })}
+              onChangeText={(text) =>
+                setFormData({ ...formData, nickname: text })
+              }
               error={errors.nickname}
               autoFocus
             />
@@ -201,12 +246,21 @@ export default function Register() {
                     title="Atrás"
                     onPress={handleBack}
                     variant="secondary"
+                    disabled={loading}
                   />
                 )}
                 <Button
-                  title={step === 4 ? 'Finalizar' : 'Siguiente'}
+                  title={
+                    loading
+                      ? "Creando..."
+                      : step === 4
+                      ? "Finalizar"
+                      : "Siguiente"
+                  }
                   onPress={handleNext}
+                  disabled={loading}
                 />
+                {loading && <ActivityIndicator style={{ marginTop: 12 }} />}
               </View>
             </View>
           </ScrollView>
@@ -217,39 +271,27 @@ export default function Register() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
+  container: { flex: 1 },
+  content: { flex: 1, padding: 20 },
   progress: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginBottom: 40,
   },
   progressDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#ccc',
+    backgroundColor: "#ccc",
     marginHorizontal: 5,
   },
-  progressDotActive: {
-    backgroundColor: '#007AFF',
-  },
-  step: {
-    flex: 1,
-    marginBottom: 20,
-  },
+  progressDotActive: { backgroundColor: "#007AFF" },
+  step: { flex: 1, marginBottom: 20 },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 30,
-    textAlign: 'center',
+    textAlign: "center",
   },
-  buttons: {
-    marginTop: 'auto',
-  },
+  buttons: { marginTop: "auto" },
 });

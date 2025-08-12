@@ -1,75 +1,184 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Dimensions,
+} from "react-native";
+import { Image } from "expo-image";
+import { Link } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { IconSymbol } from "@/components/ui/IconSymbol";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {
+  const featuredStory = {
+    id: 1,
+    title: "El León y el Ratón",
+    image:
+      "https://placehold.co/600x360/FFB6C1/FFFFFF?text=León+y+Ratón&font=montserrat",
+    description: "Una historia sobre la amistad y la ayuda mutua",
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.greeting}>¡Hola pequeño explorador! 👋</Text>
+          <Text style={styles.subtitle}>¿Listo para una nueva aventura?</Text>
+        </View>
+
+        <View style={styles.featuredCard}>
+          <Text style={styles.featuredTitle}>Historia Destacada</Text>
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: featuredStory.image }}
+              style={styles.featuredImage}
+              contentFit="cover"
+              transition={200}
+              placeholder="Cargando..."
+            />
+          </View>
+          <Text style={styles.storyTitle}>{featuredStory.title}</Text>
+          <Text style={styles.storyDescription}>
+            {featuredStory.description}
+          </Text>
+
+          <TouchableOpacity style={styles.startButton}>
+            <IconSymbol name="play.circle.fill" size={24} color="#FFFFFF" />
+            <Text style={styles.startButtonText}>¡Comenzar!</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.quickActions}>
+          <Link href="/(tabs)/explore" asChild>
+            <TouchableOpacity style={styles.actionButton}>
+              <IconSymbol name="safari" size={32} color="#4ECDC4" />
+              <Text style={styles.actionText}>Explorar</Text>
+            </TouchableOpacity>
+          </Link>
+          <Link href="/(tabs)/myStories" asChild>
+            <TouchableOpacity style={styles.actionButton}>
+              <IconSymbol name="book" size={32} color="#FF6B6B" />
+              <Text style={styles.actionText}>Mis Historias</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#4ECDC4",
   },
-  stepContainer: {
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "#F8F9FA",
+  },
+  header: {
+    padding: 20,
+    alignItems: "center",
+    backgroundColor: "#4ECDC4",
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  greeting: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    textAlign: "center",
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  subtitle: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    textAlign: "center",
+    opacity: 0.9,
+  },
+  featuredCard: {
+    margin: 20,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  featuredTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 15,
+  },
+  imageContainer: {
+    width: width - 80,
+    height: (width - 80) * 0.6, // Proporción 5:3 para una mejor vista
+    borderRadius: 15,
+    marginBottom: 15,
+    backgroundColor: "#F0F0F0", // Color de fondo mientras carga
+    overflow: "hidden", // Asegura que la imagen no sobresalga del contenedor
+  },
+  featuredImage: {
+    width: "100%",
+    height: "100%",
+  },
+  storyTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  storyDescription: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  startButton: {
+    backgroundColor: "#FF6B6B",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 25,
+    gap: 8,
+  },
+  startButtonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  quickActions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  actionButton: {
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    padding: 20,
+    borderRadius: 20,
+    width: (width - 60) / 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  actionText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginTop: 8,
   },
 });

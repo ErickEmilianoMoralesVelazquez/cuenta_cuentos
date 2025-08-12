@@ -104,6 +104,8 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#4ECDC4",
     alignItems: "center",
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   headerTitle: {
     fontSize: 24,
