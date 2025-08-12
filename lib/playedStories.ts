@@ -30,3 +30,15 @@ export async function addPlayedStory(item: PlayedStory) {
 export async function clearPlayedStories() {
   await SecureStore.deleteItemAsync(KEY);
 }
+
+export async function getPlayedStoryById(id: string) {
+  const list = await getPlayedStories();
+  return list.find(x => x.id === id);
+}
+
+export async function removePlayedStory(id: string) {
+  const list = await getPlayedStories();
+  const updated = list.filter(x => x.id !== id);
+  await SecureStore.setItemAsync(KEY, JSON.stringify(updated));
+  return updated;
+}

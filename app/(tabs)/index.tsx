@@ -10,6 +10,7 @@ import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/IconSymbol";
+import { router } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
@@ -17,18 +18,23 @@ export default function HomeScreen() {
   const featuredStory = {
     id: 1,
     title: "El León y el Ratón",
-    image:
-      "https://placehold.co/600x360/FFB6C1/FFFFFF?text=León+y+Ratón&font=montserrat",
+    image: "https://i.imgur.com/umenVQ5.png",
     description: "Una historia sobre la amistad y la ayuda mutua",
+    storyKey: "leon_raton",
+  };
+
+  const goPlay = (storyKey: string) => {
+    router.push({ pathname: "/story/player", params: { story: storyKey } });
   };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      
         <View style={styles.header}>
           <Text style={styles.greeting}>¡Hola pequeño explorador! 👋</Text>
           <Text style={styles.subtitle}>¿Listo para una nueva aventura?</Text>
         </View>
+        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
         <View style={styles.featuredCard}>
           <Text style={styles.featuredTitle}>Historia Destacada</Text>
@@ -46,7 +52,19 @@ export default function HomeScreen() {
             {featuredStory.description}
           </Text>
 
-          <TouchableOpacity style={styles.startButton}>
+          <TouchableOpacity
+            style={styles.startButton}
+            onPress={() =>
+              router.push({
+                pathname: "/story/player",
+                params: {
+                  story: featuredStory.storyKey,
+                  title: featuredStory.title,
+                  image: featuredStory.image,
+                },
+              })
+            }
+          >
             <IconSymbol name="play.circle.fill" size={24} color="#FFFFFF" />
             <Text style={styles.startButtonText}>¡Comenzar!</Text>
           </TouchableOpacity>

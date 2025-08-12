@@ -1,11 +1,24 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import { LinearGradient as ExpoLinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { addPlayedStory } from "@/lib/playedStories"; // ✅ guardar resumen
+import { IconSymbol } from "../ui/IconSymbol.ios";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 export type Choice = { text: string; nextId: string };
-export type StoryNode = { id: string; content: string; choices?: [Choice, Choice] };
+export type StoryNode = {
+  id: string;
+  content: string;
+  choices?: [Choice, Choice];
+};
 export type StoryGraph = Record<string, StoryNode>;
 
 type Meta = { storyKey: string; title: string; image?: string };
@@ -63,7 +76,9 @@ export default function StoryPlayer({
     };
 
     setTimeout(tick, typingSpeedMs);
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [currentId, node.content, typingSpeedMs]);
 
   useEffect(() => {
@@ -82,7 +97,10 @@ export default function StoryPlayer({
   const pick = (idx: 0 | 1) => {
     if (!node.choices) return;
     const c = node.choices[idx];
-    setHistory((h) => [...h, { nodeId: currentId, choiceIndex: idx, choiceText: c.text }]);
+    setHistory((h) => [
+      ...h,
+      { nodeId: currentId, choiceIndex: idx, choiceText: c.text },
+    ]);
     setCurrentId(c.nextId);
   };
 
@@ -92,8 +110,8 @@ export default function StoryPlayer({
       setFinished(true);
 
       const decisions = history
-        .filter(h => typeof h.choiceIndex !== "undefined")
-        .map(h => h.choiceText || "");
+        .filter((h) => typeof h.choiceIndex !== "undefined")
+        .map((h) => h.choiceText || "");
 
       const payload = {
         id: String(Date.now()),
@@ -107,16 +125,38 @@ export default function StoryPlayer({
         endingText: String(node.content ?? ""),
       };
 
-      addPlayedStory(payload).catch(() => { /* noop */ });
+      addPlayedStory(payload).catch(() => {
+        /* noop */
+      });
 
       onFinish?.([...history, { nodeId: currentId }]);
     }
   }, [node.choices, isTyping, finished, history, currentId, onFinish, meta]);
 
   return (
-    <ExpoLinearGradient colors={["#ffecd2", "#fcb69f"]} style={styles.background}>
+    <ExpoLinearGradient
+      colors={["#f3f3f3", "#f3f3f3"]}
+      style={styles.background}
+    >
       <View style={styles.container}>
-        <ScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        <TouchableOpacity
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingBottom: 16,
+          }}
+          onPress={() => router.back()}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <IconSymbol name="chevron.left" size={18} color="#007AFF" />
+          <Text style={styles.link}>Volver</Text>
+        </TouchableOpacity>
+
+        <ScrollView
+          ref={scrollRef}
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+        >
           <Text style={styles.paragraph}>{typed}</Text>
         </ScrollView>
 
@@ -126,10 +166,16 @@ export default function StoryPlayer({
           </TouchableOpacity>
         ) : hasChoices ? (
           <View style={styles.choicesRow}>
-            <TouchableOpacity style={[styles.choiceBtn, { backgroundColor: "#ff6f61" }]} onPress={() => pick(0)}>
+            <TouchableOpacity
+              style={[styles.choiceBtn, { backgroundColor: "#ff6f61" }]}
+              onPress={() => pick(0)}
+            >
               <Text style={styles.choiceText}>{node.choices![0].text}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.choiceBtn, { backgroundColor: "#6a5acd" }]} onPress={() => pick(1)}>
+            <TouchableOpacity
+              style={[styles.choiceBtn, { backgroundColor: "#E8D45A", alignItems: 'center', justifyContent: 'center' }]}
+              onPress={() => pick(1)}
+            >
               <Text style={styles.choiceText}>{node.choices![1].text}</Text>
             </TouchableOpacity>
           </View>
@@ -151,15 +197,20 @@ export default function StoryPlayer({
 
 const styles = StyleSheet.create({
   background: { flex: 1 },
-  container: { flex: 1, paddingHorizontal: 20, paddingTop: 30, paddingBottom: 30 },
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 30,
+  },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 120 },
   paragraph: {
-    fontSize: 22,
-    lineHeight: 32,
+    fontSize: 40,
+    lineHeight: 50,
     color: "#333",
     fontWeight: "500",
-    backgroundColor: "rgba(255,255,255,0.6)",
+    backgroundColor: "rgba(255, 255, 255, 0)",
     borderRadius: 16,
     padding: 16,
   },
@@ -173,9 +224,25 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   skipText: { fontWeight: "bold", fontSize: 16, color: "#333" },
-  choicesRow: { flexDirection: "row", gap: 12, justifyContent: "space-between", marginTop: 16 },
-  choiceBtn: { flex: 1, paddingVertical: 16, borderRadius: 16, alignItems: "center", elevation: 4 },
-  choiceText: { color: "#fff", fontWeight: "700", fontSize: 18, textAlign: "center" },
+  choicesRow: {
+    flexDirection: "row",
+    gap: 12,
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
+  choiceBtn: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: "center",
+    elevation: 4,
+  },
+  choiceText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 18,
+    textAlign: "center",
+  },
   endNote: { alignItems: "center", marginTop: 12, gap: 12 },
   endText: { fontSize: 18, fontWeight: "bold", color: "#444" },
   exitBtn: {
@@ -185,4 +252,5 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   exitText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  link: { color: "#007AFF", fontWeight: "600" },
 });
