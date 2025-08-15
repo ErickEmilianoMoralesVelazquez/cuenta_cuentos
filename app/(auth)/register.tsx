@@ -44,7 +44,7 @@ export default function Register() {
 
   const backgroundColor = useThemeColor({}, "background");
 
-  const baseURL = "http://192.168.0.104:3003";
+  const baseURL = "https://b9de05143a5b.ngrok-free.app";
 
   const validateStep = () => {
     const newErrors: Partial<FormData> = {};
@@ -58,9 +58,6 @@ export default function Register() {
           newErrors.age = "Ingresa una edad válida";
         break;
       case 3:
-        if (!formData.email) newErrors.email = "El correo es requerido";
-        else if (!/\S+@\S+\.\S+/.test(formData.email))
-          newErrors.email = "Ingresa un correo válido";
         if (!formData.password)
           newErrors.password = "La contraseña es requerida";
         else if (formData.password.length < 6)
@@ -170,7 +167,7 @@ export default function Register() {
             <ThemedText style={styles.title}>Datos de acceso</ThemedText>
 
             <FormInput
-              label="Correo electrónico"
+              label="Correo electrónico ó usuario"
               value={formData.email}
               onChangeText={(text) => setFormData({ ...formData, email: text })}
               error={errors.email}

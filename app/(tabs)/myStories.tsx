@@ -2,6 +2,7 @@
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { apiService, type UserSessionsResponse } from "@/lib/apiService";
 import { useFocusEffect } from "@react-navigation/native";
+import { router } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -72,12 +73,17 @@ export default function MyStories() {
     try {
       console.log('🔄 Obteniendo historial de sesiones...');
       const response = await apiService.getUserSessions();
-      console.log('🔄 Sesiones obtenidas:', response);
-      setSessions(response.sessions);
       console.log('✅ Sesiones obtenidas:', response.sessions.length);
-    } catch (err) {
-      console.error('Error obteniendo sesiones:', err);
-      setError('Error al cargar el historial');
+      setSessions(response.sessions);
+    } catch (err: any) {
+      console.error('❌ Error obteniendo sesiones:', err);
+      if (err.message?.includes('no implementado')) {
+        setError('El historial de sesiones no está disponible en el backend');
+      } else if (err.message?.includes('No estás autenticado')) {
+        setError('Necesitas iniciar sesión para ver tu historial');
+      } else {
+        setError('Error al cargar el historial. Verifica que las rutas del backend estén ordenadas correctamente.');
+      }
       setSessions([]);
     } finally {
       setLoading(false);
@@ -132,6 +138,38 @@ export default function MyStories() {
       setShowDetails(false);
       setSelectedSession(null);
     });
+  };
+
+  const continueStory = (session: UserSession) => {
+    hideSessionDetails();
+    setTimeout(() => {
+      // Navegar al player con información de sesión para continuar
+      router.push({ 
+        pathname: "/story/player", 
+        params: { 
+          storyId: session.story.id.toString(),
+          title: session.story.title,
+          image: session.story.image,
+          sessionId: session.id.toString(), // Agregar sessionId para continuar
+          continueSession: 'true'
+        } 
+      });
+    }, 300);
+  };
+
+  const playStoryAgain = (session: UserSession) => {
+    hideSessionDetails();
+    setTimeout(() => {
+      // Navegar al player para empezar una nueva sesión
+      router.push({ 
+        pathname: "/story/player", 
+        params: { 
+          storyId: session.story.id.toString(),
+          title: session.story.title,
+          image: session.story.image
+        } 
+      });
+    }, 300);
   };
 
 
@@ -292,6 +330,41 @@ export default function MyStories() {
                   </View>
                 )}
 
+                <View style={styles.actionButtons}>
+                  {selectedSession.status === 'in_progress' ? (
+                    // Botón para continuar historia en progreso
+                    <TouchableOpacity
+                      style={styles.continueButton}
+                      onPress={() => continueStory(selectedSession)}
+                    >
+                      <LinearGradient
+                        colors={['#4ECDC4', '#44A08D']}
+                        style={styles.buttonGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                      >
+                        <IconSymbol name="play.fill" size={24} color="#FFFFFF" />
+                        <Text style={styles.buttonText}>Continuar Historia</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  ) : (
+                    // Botón para jugar de nuevo historia completada
+                    <TouchableOpacity
+                      style={styles.playAgainButton}
+                      onPress={() => playStoryAgain(selectedSession)}
+                    >
+                      <LinearGradient
+                        colors={pickGradient(selectedSession)}
+                        style={styles.buttonGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                      >
+                        <IconSymbol name="arrow.clockwise" size={24} color="#FFFFFF" />
+                        <Text style={styles.buttonText}>Jugar de Nuevo</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </ScrollView>
             </Animated.View>
           </Animated.View>
@@ -571,5 +644,31 @@ const styles = StyleSheet.create({
     color: '#666',
     fontStyle: 'italic',
     marginTop: 8,
+  },
+
+  // Estilos para los botones de acción
+  actionButtons: {
+    marginTop: 30,
+  },
+  continueButton: {
+    borderRadius: 25,
+    overflow: 'hidden',
+  },
+  playAgainButton: {
+    borderRadius: 25,
+    overflow: 'hidden',
+  },
+  buttonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 30,
+    gap: 12,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

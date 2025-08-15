@@ -234,28 +234,37 @@ class APIService {
   async getUserSessions(): Promise<UserSessionsResponse> {
     try {
       const headers = await getAuthHeaders();
-      const response = await fetch(getApiUrl(BACKEND_CONFIG.ENDPOINTS.USER_SESSIONS), {
+      const url = getApiUrl(BACKEND_CONFIG.ENDPOINTS.USER_SESSIONS);
+      console.log('🔄 Solicitando sesiones desde:', url);
+      console.log('🔄 Headers:', headers);
+      
+      const response = await fetch(url, {
         headers,
       });
 
+      console.log('🔄 Status de respuesta:', response.status);
+      
       if (!response.ok) {
-        // Para cualquier error, incluyendo 404, retornar una respuesta vacía
-        console.log('📝 Endpoint de historial no disponible o con error:', response.status);
-        return {
-          message: "No hay sesiones disponibles",
-          sessions: []
-        };
+        if (response.status === 401) {
+          console.error('❌ Usuario no autenticado (401). Necesitas hacer login primero.');
+          throw new Error('No estás autenticado. Por favor, inicia sesión.');
+        } else if (response.status === 404) {
+          console.error('❌ Endpoint de sesiones no encontrado (404). El backend necesita implementar GET /api/stories/sessions');
+          throw new Error('Endpoint de sesiones no implementado en el backend');
+        } else {
+          console.error('❌ Error en endpoint de sesiones:', response.status, response.statusText);
+          const errorText = await response.text();
+          console.error('❌ Respuesta del error:', errorText);
+          throw new Error(`Error del servidor: ${response.status}`);
+        }
       }
 
       const data = await response.json();
+      console.log('✅ Datos de sesiones recibidos:', data);
       return data;
     } catch (err) {
-      // Para cualquier error de red, retornar una respuesta vacía
-      console.log('📝 Error de conexión al obtener sesiones, usando fallback local:', err);
-      return {
-        message: "No hay sesiones disponibles",
-        sessions: []
-      };
+      console.error('❌ Error obteniendo sesiones:', err);
+      throw err;
     }
   }
 }

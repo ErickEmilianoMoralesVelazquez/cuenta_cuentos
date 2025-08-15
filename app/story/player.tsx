@@ -11,7 +11,13 @@ import type { StoryGraph, Choice } from "@/components/story/StoryPlayer";
 import type { BackendStoryDetail } from "@/lib/apiService";
 
 export default function PlayerScreen() {
-  const params = useLocalSearchParams<{ storyId?: string; title?: string; image?: string }>();
+  const params = useLocalSearchParams<{ 
+    storyId?: string; 
+    title?: string; 
+    image?: string;
+    sessionId?: string;
+    continueSession?: string;
+  }>();
   const { getStoryDetail } = useStories();
   
   const [storyDetail, setStoryDetail] = useState<BackendStoryDetail | null>(null);
@@ -21,6 +27,11 @@ export default function PlayerScreen() {
 
   // ID de la historia del backend
   const storyId = params.storyId ? parseInt(params.storyId) : null;
+  const sessionId = params.sessionId ? parseInt(params.sessionId) : undefined;
+  const continueSession = params.continueSession === 'true';
+
+  // Log para debugging
+  console.log('PlayerScreen params:', { storyId, sessionId, continueSession });
 
   const loadStory = useCallback(async () => {
     try {
@@ -109,6 +120,8 @@ export default function PlayerScreen() {
         startId={storyDetail?.startNodeId || "start"}
         meta={meta}
         storyId={storyId!}
+        sessionId={sessionId}
+        continueSession={continueSession}
         onExit={() => router.replace("/(tabs)/myStories")}
         onFinish={(history) => {
           console.log("Historia terminada:", history);

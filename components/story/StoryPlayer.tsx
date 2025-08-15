@@ -30,6 +30,8 @@ type Props = {
   onExit?: () => void;
   meta?: Meta;
   storyId: number;
+  sessionId?: number;
+  continueSession?: boolean;
 };
 
 export default function StoryPlayer({
@@ -40,6 +42,8 @@ export default function StoryPlayer({
   onExit,
   meta,
   storyId,
+  sessionId,
+  continueSession = false,
 }: Props) {
   const [currentId, setCurrentId] = useState(startId);
   const [typed, setTyped] = useState("");
@@ -61,16 +65,28 @@ export default function StoryPlayer({
 
   const initBackendSession = useCallback(async () => {
     try {
-      console.log('Iniciando sesión del backend para storyId:', storyId);
-      const response = await apiService.startStory(storyId);
-      
-      setBackendSession({
-        sessionId: response.session.id,
-        storyId: response.session.story.id,
-        currentNode: response.session.currentNode,
-      });
-      
-      console.log('Sesión iniciada:', response.session.id);
+      if (continueSession && sessionId) {
+        // Continuar sesión existente
+        console.log('Continuando sesión existente:', sessionId);
+        setBackendSession({
+          sessionId: sessionId,
+          storyId: storyId,
+          currentNode: null, // Se actualizará con la primera acción
+        });
+        console.log('Sesión continuada:', sessionId);
+      } else {
+        // Iniciar nueva sesión
+        console.log('Iniciando nueva sesión del backend para storyId:', storyId);
+        const response = await apiService.startStory(storyId);
+        
+        setBackendSession({
+          sessionId: response.session.id,
+          storyId: response.session.story.id,
+          currentNode: response.session.currentNode,
+        });
+        
+        console.log('Nueva sesión iniciada:', response.session.id);
+      }
     } catch (error) {
       console.error('Error iniciando sesión del backend:', error);
       Alert.alert(
@@ -78,7 +94,7 @@ export default function StoryPlayer({
         "No se pudo conectar con el servidor. Verifica tu conexión a internet."
       );
     }
-  }, [storyId]);
+  }, [storyId, sessionId, continueSession]);
 
   useEffect(() => {
     if (storyId && !backendSession) {
