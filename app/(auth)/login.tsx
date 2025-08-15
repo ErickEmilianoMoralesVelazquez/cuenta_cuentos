@@ -1,28 +1,29 @@
+import { Link, router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { useState } from "react";
 import {
-  StyleSheet,
-  View,
-  Text,
-  Keyboard,
-  TouchableWithoutFeedback,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
   ActivityIndicator,
   Alert,
-  TouchableOpacity, // 👈 nuevo
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
-import { Link, router } from "expo-router";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import * as SecureStore from "expo-secure-store";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { FormInput } from "@/components/auth/FormInput";
 import { Button } from "@/components/auth/Button";
+import { FormInput } from "@/components/auth/FormInput";
 import { ThemedText } from "@/components/ThemedText";
+import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { IconSymbol } from "@/components/ui/IconSymbol"; // 👈 nuevo
+import { getApiUrl } from "@/lib/config";
 
 interface LoginForm {
   email: string;
@@ -36,16 +37,12 @@ export default function Login() {
   });
   const [errors, setErrors] = useState<Partial<LoginForm>>({});
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // 👈 nuevo
+  const [showPassword, setShowPassword] = useState(false);
 
   const backgroundColor = useThemeColor({}, "background");
-  const baseURL = "https://96e3458c9b70.ngrok-free.app";
 
   const validateForm = () => {
     const newErrors: Partial<LoginForm> = {};
-    if (!formData.email) newErrors.email = "El correo es requerido";
-    else if (!/\S+@\S+\.\S+/.test(formData.email))
-      newErrors.email = "Ingresa un correo válido";
     if (!formData.password) newErrors.password = "La contraseña es requerida";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -56,7 +53,7 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${baseURL}/api/auth/login`, {
+      const res = await fetch(getApiUrl('/api/auth/login'), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -125,9 +122,8 @@ export default function Login() {
                   setFormData({ ...formData, password: text })
                 }
                 error={errors.password}
-                secureTextEntry={!showPassword} // 👈 cambia según estado
+                secureTextEntry={!showPassword}
                 rightIcon={
-                  // 👈 icono al final del input
                   <TouchableOpacity onPress={() => setShowPassword((v) => !v)}>
                     <IconSymbol
                       name={showPassword ? "eye.slash" : "eye"}

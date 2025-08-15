@@ -5,53 +5,17 @@ import {
   FlatList,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { ThemedText } from "@/components/ThemedText";
 import { router } from "expo-router";
+import { useStories, type UnifiedStory } from "@/hooks/useStories";
 
 const { width } = Dimensions.get("window");
-
-// Agregamos storyKey para elegir el grafo en el player
-const stories = [
-  {
-    id: 1,
-    title: "El Bosque Brillante",
-    image: "https://img.lovepik.com/photo/60178/0375.jpg_wh860.jpg",
-    duration: "3 min",
-    category: "Aventura",
-    storyKey: "forest", // <- mapea a constants/stories/index.ts
-  },
-  {
-    id: 2,
-    title: "El león y el ratón",
-    image:
-      "https://www.chiquipedia.com/imagenes/el-raton-y-el-leon.jpg",
-    duration: "3 min",
-    category: "Fábulas",
-    storyKey: "leon_raton", // por ahora reutilizamos el mismo grafo
-  },
-  {
-    id: 3,
-    title: "Nave espacial",
-    image:
-      "https://img.freepik.com/fotos-premium/escena-ciencia-ficcion-que-muestra-nave-espacial-secuestrando-humano-pintura-ilustracion-nocturna_37402-1798.jpg",
-    duration: "3 min",
-    category: "Ficción",
-    storyKey: "three",
-  },
-  {
-    id: 4,
-    title: "Misterio urbano",
-    image:
-      "https://i.pinimg.com/originals/f3/87/5b/f3875b2d671f41c997e053e4a7cfe60c.png",
-    duration: "3 min",
-    category: "Misterio",
-    storyKey: "two",
-  },
-];
 
 const palette = [
   "#FEE2E2",
@@ -70,19 +34,21 @@ const pickColor = (key: string) => {
 };
 
 export default function Explore() {
-  const goPlay = (storyKey: string) => {
-    router.push({ pathname: "/story/player", params: { story: storyKey } });
+  const { stories, loading, error, retryFetch } = useStories();
+
+  const goPlay = (storyId: number) => {
+    router.push({ pathname: "/story/player", params: { storyId: storyId.toString() } });
   };
 
-  const renderStoryCard = ({ item }: { item: (typeof stories)[0] }) => (
+  const renderStoryCard = ({ item }: { item: UnifiedStory }) => (
   <TouchableOpacity
     style={styles.storyCard}
-    onPress={() => goPlay(item.storyKey)}
+    onPress={() => goPlay(item.id)}
   >
     <View
       style={[
         styles.imageContainer,
-        !item.image && { backgroundColor: pickColor(item.storyKey || item.title) }
+        !item.image && { backgroundColor: pickColor(item.title) }
       ]}
     >
       {item.image ? (
@@ -113,7 +79,7 @@ export default function Explore() {
           router.push({
             pathname: "/story/player",
             params: {
-              story: item.storyKey,
+              storyId: item.id.toString(),
               title: item.title,
               image: item.image,
             },
@@ -137,13 +103,37 @@ export default function Explore() {
           </ThemedText>
         </View>
 
-        <FlatList
-          data={stories}
-          renderItem={renderStoryCard}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4ECDC4" />
+            <Text style={styles.loadingText}>Cargando historias...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <IconSymbol name="exclamationmark.triangle" size={48} color="#FF6B6B" />
+            <Text style={styles.errorText}>Error al cargar historias</Text>
+            <Text style={styles.errorSubtext}>Mostrando contenido local</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={retryFetch}>
+              <Text style={styles.retryButtonText}>Reintentar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <FlatList
+            data={stories}
+            renderItem={renderStoryCard}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={loading}
+                onRefresh={retryFetch}
+                colors={["#4ECDC4"]}
+                tintColor="#4ECDC4"
+              />
+            }
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -209,4 +199,46 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   playButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "bold" },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+    marginTop: 10,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#FF6B6B",
+    fontWeight: "600",
+    marginTop: 10,
+    textAlign: "center",
+  },
+  errorSubtext: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 5,
+    textAlign: "center",
+  },
+  retryButton: {
+    backgroundColor: "#4ECDC4",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 15,
+    marginTop: 15,
+  },
+  retryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
 });

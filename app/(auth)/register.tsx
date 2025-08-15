@@ -1,23 +1,23 @@
+import { IconSymbol } from "@/components/ui/IconSymbol";
+import { router } from "expo-router";
+import { useState } from "react";
 import {
-  StyleSheet,
-  View,
-  Keyboard,
-  TouchableWithoutFeedback,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
   Alert,
-  TouchableOpacity
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, { FadeInUp, FadeOutDown } from "react-native-reanimated";
-import { useState } from "react";
-import { router } from "expo-router";
-import { IconSymbol } from "@/components/ui/IconSymbol";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { FormInput } from "@/components/auth/FormInput";
 import { Button } from "@/components/auth/Button";
+import { FormInput } from "@/components/auth/FormInput";
 import { ThemedText } from "@/components/ThemedText";
 import { useThemeColor } from "@/hooks/useThemeColor";
 
@@ -44,7 +44,7 @@ export default function Register() {
 
   const backgroundColor = useThemeColor({}, "background");
 
-  const baseURL = "https://96e3458c9b70.ngrok-free.app";
+  const baseURL = "http://192.168.0.104:3003";
 
   const validateStep = () => {
     const newErrors: Partial<FormData> = {};

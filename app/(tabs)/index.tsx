@@ -5,26 +5,32 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { router } from "expo-router";
+import { useStories } from "@/hooks/useStories";
 
 const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {
-  const featuredStory = {
+  const { stories, loading, error } = useStories();
+  
+  // Usar la primera historia como destacada, o fallback
+  const featuredStory = stories[0] || {
     id: 1,
-    title: "El León y el Ratón",
+    title: "El León y el Ratón", 
     image: "https://www.chiquipedia.com/imagenes/el-raton-y-el-leon.jpg",
     description: "Una historia sobre la amistad y la ayuda mutua",
-    storyKey: "leon_raton",
+    duration: "3 min",
+    category: "Fábulas",
   };
 
-  const goPlay = (storyKey: string) => {
-    router.push({ pathname: "/story/player", params: { story: storyKey } });
+  const goPlay = (storyId: number) => {
+    router.push({ pathname: "/story/player", params: { storyId: storyId.toString() } });
   };
 
   return (
@@ -38,36 +44,52 @@ export default function HomeScreen() {
 
         <View style={styles.featuredCard}>
           <Text style={styles.featuredTitle}>Historia Destacada</Text>
-          <View style={styles.imageContainer}>
-            <Image
-              source={{ uri: featuredStory.image }}
-              style={styles.featuredImage}
-              contentFit="cover"
-              transition={200}
-              placeholder="Cargando..."
-            />
-          </View>
-          <Text style={styles.storyTitle}>{featuredStory.title}</Text>
-          <Text style={styles.storyDescription}>
-            {featuredStory.description}
-          </Text>
+          
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#4ECDC4" />
+              <Text style={styles.loadingText}>Cargando historias...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <IconSymbol name="exclamationmark.triangle" size={48} color="#FF6B6B" />
+              <Text style={styles.errorText}>Error al cargar historias</Text>
+              <Text style={styles.errorSubtext}>Usando contenido local</Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.imageContainer}>
+                <Image
+                  source={{ uri: featuredStory.image }}
+                  style={styles.featuredImage}
+                  contentFit="cover"
+                  transition={200}
+                  placeholder="Cargando..."
+                />
+              </View>
+              <Text style={styles.storyTitle}>{featuredStory.title}</Text>
+              <Text style={styles.storyDescription}>
+                {featuredStory.description}
+              </Text>
 
-          <TouchableOpacity
-            style={styles.startButton}
-            onPress={() =>
-              router.push({
-                pathname: "/story/player",
-                params: {
-                  story: featuredStory.storyKey,
-                  title: featuredStory.title,
-                  image: featuredStory.image,
-                },
-              })
-            }
-          >
-            <IconSymbol name="play.circle.fill" size={24} color="#FFFFFF" />
-            <Text style={styles.startButtonText}>¡Comenzar!</Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.startButton}
+                onPress={() =>
+                  router.push({
+                    pathname: "/story/player",
+                    params: {
+                      storyId: featuredStory.id.toString(),
+                      title: featuredStory.title,
+                      image: featuredStory.image,
+                    },
+                  })
+                }
+              >
+                <IconSymbol name="play.circle.fill" size={24} color="#FFFFFF" />
+                <Text style={styles.startButtonText}>¡Comenzar!</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         <View style={styles.quickActions}>
@@ -198,5 +220,31 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#333",
     marginTop: 8,
+  },
+  loadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+    marginTop: 10,
+  },
+  errorContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#FF6B6B",
+    fontWeight: "600",
+    marginTop: 10,
+  },
+  errorSubtext: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 5,
   },
 });

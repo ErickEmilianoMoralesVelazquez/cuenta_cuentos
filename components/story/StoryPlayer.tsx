@@ -1,17 +1,16 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
+import { apiService } from "@/lib/apiService";
 import { LinearGradient as ExpoLinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { addPlayedStory } from "@/lib/playedStories"; // ✅ guardar resumen
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import { IconSymbol } from "../ui/IconSymbol.ios";
-import { SafeAreaView } from "react-native-safe-area-context";
-
 
 export type Choice = { text: string; nextId: string };
 export type StoryNode = {
@@ -21,7 +20,7 @@ export type StoryNode = {
 };
 export type StoryGraph = Record<string, StoryNode>;
 
-type Meta = { storyKey: string; title: string; image?: string };
+type Meta = { storyId: number; title: string; image?: string };
 
 type Props = {
   story: StoryGraph;
@@ -29,7 +28,8 @@ type Props = {
   typingSpeedMs?: number;
   onFinish?: (history: { nodeId: string; choiceIndex?: 0 | 1 }[]) => void;
   onExit?: () => void;
-  meta?: Meta; // ✅ info para guardar en el resumen
+  meta?: Meta;
+  storyId: number;
 };
 
 export default function StoryPlayer({
@@ -39,19 +39,52 @@ export default function StoryPlayer({
   onFinish,
   onExit,
   meta,
+  storyId,
 }: Props) {
   const [currentId, setCurrentId] = useState(startId);
   const [typed, setTyped] = useState("");
   const [isTyping, setIsTyping] = useState(true);
   const [finished, setFinished] = useState(false);
 
-  // ✅ guardamos también el texto de la elección
   const [history, setHistory] = useState<
     { nodeId: string; choiceIndex?: 0 | 1; choiceText?: string }[]
   >([]);
 
+  const [backendSession, setBackendSession] = useState<{
+    sessionId: number;
+    storyId: number;
+    currentNode: any;
+  } | null>(null);
+
   const node = story[currentId];
   const scrollRef = useRef<ScrollView>(null);
+
+  const initBackendSession = useCallback(async () => {
+    try {
+      console.log('Iniciando sesión del backend para storyId:', storyId);
+      const response = await apiService.startStory(storyId);
+      
+      setBackendSession({
+        sessionId: response.session.id,
+        storyId: response.session.story.id,
+        currentNode: response.session.currentNode,
+      });
+      
+      console.log('Sesión iniciada:', response.session.id);
+    } catch (error) {
+      console.error('Error iniciando sesión del backend:', error);
+      Alert.alert(
+        "Error de Conexión", 
+        "No se pudo conectar con el servidor. Verifica tu conexión a internet."
+      );
+    }
+  }, [storyId]);
+
+  useEffect(() => {
+    if (storyId && !backendSession) {
+      initBackendSession();
+    }
+  }, [storyId, backendSession, initBackendSession]);
 
   // tipeo robusto con slice (evita "undefined")
   useEffect(() => {
@@ -93,45 +126,64 @@ export default function StoryPlayer({
     setIsTyping(false);
   };
 
-  // ✅ registra la elección con su texto
-  const pick = (idx: 0 | 1) => {
+  const pick = async (idx: 0 | 1) => {
     if (!node.choices) return;
     const c = node.choices[idx];
+    
+    // Registrar elección localmente
     setHistory((h) => [
       ...h,
       { nodeId: currentId, choiceIndex: idx, choiceText: c.text },
     ]);
+    
+    // Enviar elección al servidor (siempre, ya que todas las historias son del backend)
+    if (backendSession) {
+      try {
+        const choiceId = backendSession.currentNode?.choices?.[idx]?.id || idx + 1;
+        
+        console.log('Enviando elección al backend:', choiceId);
+        const response = await apiService.makeChoice(backendSession.sessionId, choiceId);
+        
+        console.log('Respuesta del backend:', response);
+        
+        // Actualizar el nodo actual del backend
+        if (response.nextNode) {
+          setBackendSession(prev => prev ? {
+            ...prev,
+            currentNode: response.nextNode
+          } : null);
+        }
+        
+        // Si la historia terminó en el backend
+        if (response.storyFinished) {
+          console.log('Historia terminada en el backend');
+        }
+        
+      } catch (error) {
+        console.error('Error enviando elección al backend:', error);
+        Alert.alert(
+          "Error de Conexión", 
+          "No se pudo enviar tu elección al servidor."
+        );
+        return; // No continuar si hay error
+      }
+    }
+    
     setCurrentId(c.nextId);
   };
 
-  // ✅ al terminar, guarda resumen y llama onFinish una sola vez
+  // Al terminar, llamar onFinish (el historial se guarda automáticamente en el backend)
   useEffect(() => {
     if (!node.choices && !isTyping && !finished) {
       setFinished(true);
 
-      const decisions = history
-        .filter((h) => typeof h.choiceIndex !== "undefined")
-        .map((h) => h.choiceText || "");
-
-      const payload = {
-        id: String(Date.now()),
-        storyKey: meta?.storyKey ?? "unknown",
-        title: meta?.title ?? "Historia",
-        image: meta?.image,
-        finishedAtISO: new Date().toISOString(),
-        progress: 100,
-        decisions,
-        endingId: currentId,
-        endingText: String(node.content ?? ""),
-      };
-
-      addPlayedStory(payload).catch(() => {
-        /* noop */
-      });
-
-      onFinish?.([...history, { nodeId: currentId }]);
+      setTimeout(() => {
+        console.log('Historia completada:', meta?.title);
+        console.log('El historial se ha guardado automáticamente en el backend');
+        onFinish?.([...history, { nodeId: currentId }]);
+      }, 0);
     }
-  }, [node.choices, isTyping, finished, history, currentId, onFinish, meta]);
+  }, [node.choices, isTyping, finished]);
 
   return (
     <ExpoLinearGradient

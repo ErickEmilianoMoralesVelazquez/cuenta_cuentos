@@ -1,8 +1,8 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack, router } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import 'react-native-reanimated';
@@ -39,8 +39,8 @@ export default function RootLayout() {
     setIsLoading(false);
     // Redirigir a la pantalla de registro después de un pequeño delay
     setTimeout(() => {
-      // router.replace('/(auth)/login');
-      router.replace('/');
+      router.replace('/(auth)/login');
+      // router.replace('/');
     }, 100);
   }, []);
 

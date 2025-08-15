@@ -1,29 +1,31 @@
 // app/(tabs)/myStories.tsx
+import { IconSymbol } from "@/components/ui/IconSymbol";
+import { apiService, type UserSessionsResponse } from "@/lib/apiService";
+import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
+  ActivityIndicator,
   FlatList,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-  Alert,
+  View,
+  Animated,
+  Dimensions,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconSymbol } from "@/components/ui/IconSymbol";
-import { useFocusEffect } from "@react-navigation/native";
-import {
-  getPlayedStories,
-  PlayedStory,
-  removePlayedStory,
-  clearPlayedStories,
-} from "@/lib/playedStories";
-import { router } from "expo-router";
+import { LinearGradient } from 'expo-linear-gradient';
 
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/es";
+import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
 dayjs.locale("es");
+
+type UserSession = UserSessionsResponse['sessions'][0];
+
+const { height } = Dimensions.get('window');
 
 const palette = [
   "#FEE2E2",
@@ -35,21 +37,51 @@ const palette = [
   "#D1FAE5",
   "#FDE68A",
 ];
-const pickColor = (item: PlayedStory) => {
-  const key = item.storyKey || item.title || "x";
+
+const gradientPalette = [
+  ["#FF6B6B", "#FF8E53"],
+  ["#4ECDC4", "#44A08D"],
+  ["#45B7D1", "#96C93D"],
+  ["#F093FB", "#F5576C"],
+  ["#4FACFE", "#00F2FE"],
+  ["#43E97B", "#38F9D7"],
+  ["#FA709A", "#FEE140"],
+  ["#A8EDEA", "#FED6E3"],
+];
+
+const pickColor = (item: UserSession) => {
+  const key = item.story.title || "x";
   const sum = [...key].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
   return palette[Math.abs(sum) % palette.length];
 };
 
+const pickGradient = (item: UserSession) => {
+  const key = item.story.title || "x";
+  const sum = [...key].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return gradientPalette[Math.abs(sum) % gradientPalette.length];
+};
+
 export default function MyStories() {
-  const [played, setPlayed] = useState<PlayedStory[]>([]);
+  const [sessions, setSessions] = useState<UserSession[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await getPlayedStories();
-    setPlayed(data);
-    setLoading(false);
+    setError(null);
+    try {
+      console.log('🔄 Obteniendo historial de sesiones...');
+      const response = await apiService.getUserSessions();
+      console.log('🔄 Sesiones obtenidas:', response);
+      setSessions(response.sessions);
+      console.log('✅ Sesiones obtenidas:', response.sessions.length);
+    } catch (err) {
+      console.error('Error obteniendo sesiones:', err);
+      setError('Error al cargar el historial');
+      setSessions([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useFocusEffect(
@@ -58,100 +90,86 @@ export default function MyStories() {
     }, [load])
   );
 
-  const openSummary = (item: PlayedStory) => {
-    router.push({ pathname: "/story/summary", params: { id: item.id } });
+  const [selectedSession, setSelectedSession] = useState<UserSession | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const slideAnim = useState(new Animated.Value(height))[0];
+  const fadeAnim = useState(new Animated.Value(0))[0];
+
+  const showSessionDetails = (item: UserSession) => {
+    setSelectedSession(item);
+    setShowDetails(true);
+    
+    // Animación de entrada espectacular
+    Animated.parallel([
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
-  // borrar una sola
-  const confirmDelete = (item: PlayedStory) => {
-    Alert.alert(
-      "Eliminar historia",
-      `¿Quieres eliminar “${item.title}”? Esta acción no se puede deshacer.`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            const updated = await removePlayedStory(item.id);
-            setPlayed(updated); // optimista
-          },
-        },
-      ]
-    );
+  const hideSessionDetails = () => {
+    Animated.parallel([
+      Animated.spring(slideAnim, {
+        toValue: height,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShowDetails(false);
+      setSelectedSession(null);
+    });
   };
 
-  // borrar todas
-  const confirmClearAll = () => {
-    if (!played.length) return;
-    Alert.alert(
-      "Borrar todas las historias",
-      "Se eliminarán todas tus historias guardadas. ¿Continuar?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Borrar todo",
-          style: "destructive",
-          onPress: async () => {
-            await clearPlayedStories();
-            setPlayed([]);
-          },
-        },
-      ]
-    );
-  };
 
-  const renderStoryItem = ({ item }: { item: PlayedStory }) => (
+  const renderStoryItem = ({ item }: { item: UserSession }) => (
     <TouchableOpacity
       style={styles.storyItem}
-      onPress={() => openSummary(item)}
+      onPress={() => showSessionDetails(item)}
     >
       <View style={[styles.cover, { backgroundColor: pickColor(item) }]} />
 
       <View style={styles.storyDetails}>
-        <Text style={styles.storyTitle}>{item.title}</Text>
+        <Text style={styles.storyTitle}>{item.story.title}</Text>
         <Text style={styles.lastPlayed}>
-          Última vez: {dayjs(item.finishedAtISO).fromNow()}
+          Última vez: {dayjs(item.createdAt).fromNow()}
         </Text>
 
-        {!!item.decisions.length && (
+        <Text style={styles.statusText}>
+          Estado: {item.status === 'finished' ? 'Completada' : 'En progreso'}
+        </Text>
+
+        {!!item.choices.length && (
           <View style={styles.summaryBox}>
-            <Text style={styles.summaryTitle}>Tus decisiones</Text>
+            <Text style={styles.summaryTitle}>Decisiones tomadas: {item.choices.length}</Text>
             <Text style={styles.summaryText}>
-              {item.decisions.map((d, i) => `${i + 1}. ${d}`).join("  •  ")}
+              {item.choices.slice(0, 2).map((choice, i) => `${i + 1}. ${choice.choice_text}`).join("  •  ")}
+              {item.choices.length > 2 && `... (+${item.choices.length - 2} más)`}
             </Text>
           </View>
         )}
-
-        <Text numberOfLines={2} style={styles.endingText}>
-          Final: {item.endingText}
-        </Text>
-
-        <View style={styles.progressContainer}>
-          <View style={styles.progressBar}>
-            <View
-              style={[styles.progressFill, { width: `${item.progress}%` }]}
-            />
-          </View>
-          <Text style={styles.progressText}>{item.progress}%</Text>
-        </View>
       </View>
 
       <View style={styles.actions}>
-        {/* borrar individual */}
+        {/* ver detalles */}
         <TouchableOpacity
-          style={styles.iconBtn}
-          onPress={() => confirmDelete(item)}
+          style={styles.detailsButton}
+          onPress={() => showSessionDetails(item)}
         >
-          <IconSymbol name="trash" size={20} color="#FF6B6B" />
-        </TouchableOpacity>
-
-        {/* ver resumen */}
-        <TouchableOpacity
-          style={styles.playButton}
-          onPress={() => openSummary(item)}
-        >
-          <IconSymbol name="play.fill" size={20} color="#FFFFFF" />
+          <IconSymbol name="info.circle" size={20} color="#4ECDC4" />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -161,23 +179,28 @@ export default function MyStories() {
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Mis Historias</Text>
-          <Text style={styles.headerSubtitle}>Tus aventuras guardadas</Text>
-          <TouchableOpacity
-            style={[styles.clearAllBtn, { opacity: played.length ? 1 : 0.5 }]}
-            disabled={!played.length || loading}
-            onPress={confirmClearAll}
-          >
-            <IconSymbol name="trash" size={16} color="#fff" />
-            <Text style={styles.clearAllText}>Borrar todo</Text>
-          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Mi Historial</Text>
+          <Text style={styles.headerSubtitle}>Tus sesiones de historias</Text>
         </View>
 
-        {played.length > 0 ? (
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4ECDC4" />
+            <Text style={styles.loadingText}>Cargando historial...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <IconSymbol name="exclamationmark.triangle" size={48} color="#FF6B6B" />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={load}>
+              <Text style={styles.retryButtonText}>Reintentar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : sessions.length > 0 ? (
           <FlatList
-            data={played}
+            data={sessions}
             renderItem={renderStoryItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
             refreshing={loading}
@@ -188,9 +211,90 @@ export default function MyStories() {
             <IconSymbol name="book" size={80} color="#CCC" />
             <Text style={styles.emptyTitle}>No hay historias aún</Text>
             <Text style={styles.emptySubtitle}>
-              Explora y escucha historias para verlas aquí
+              Comienza a jugar historias para ver tu historial aquí
             </Text>
           </View>
+        )}
+
+        {/* Modal espectacular de detalles de sesión */}
+        {showDetails && selectedSession && (
+          <Animated.View 
+            style={[
+              styles.modalOverlay,
+              {
+                opacity: fadeAnim,
+              }
+            ]}
+          >
+            <TouchableOpacity 
+              style={styles.modalBackdrop} 
+              onPress={hideSessionDetails}
+              activeOpacity={1}
+            />
+            
+            <Animated.View
+              style={[
+                styles.modalContent,
+                {
+                  transform: [{ translateY: slideAnim }],
+                }
+              ]}
+            >
+              <LinearGradient
+                colors={pickGradient(selectedSession)}
+                style={styles.modalHeader}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.modalHeaderContent}>
+                  <Text style={styles.modalTitle}>{selectedSession.story.title}</Text>
+                  <TouchableOpacity onPress={hideSessionDetails} style={styles.closeButton}>
+                    <IconSymbol name="xmark" size={24} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={styles.statusContainer}>
+                  <View style={[
+                    styles.statusBadge, 
+                    { backgroundColor: selectedSession.status === 'finished' ? '#4ECDC4' : '#FF8E53' }
+                  ]}>
+                    <Text style={styles.modalStatusText}>
+                      {selectedSession.status === 'finished' ? '✅ Completada' : '⏳ En progreso'}
+                    </Text>
+                  </View>
+                  <Text style={styles.dateText}>
+                    {dayjs(selectedSession.createdAt).format('DD/MM/YYYY HH:mm')}
+                  </Text>
+                </View>
+              </LinearGradient>
+
+              <ScrollView 
+                style={styles.modalBody}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.modalScrollContent}
+              >
+                <Text style={styles.sectionTitle}>🎯 Tu Aventura</Text>
+                <Text style={styles.choicesCount}>
+                  Tomaste {selectedSession.choices.length} decisiones en esta historia
+                </Text>
+
+                {selectedSession.choices.length > 0 && (
+                  <View style={styles.choicesContainer}>
+                    <Text style={styles.sectionTitle}>📝 Decisiones Tomadas</Text>
+                    {selectedSession.choices.map((choice, index) => (
+                      <View key={index} style={styles.choiceItem}>
+                        <View style={styles.choiceNumber}>
+                          <Text style={styles.choiceNumberText}>{index + 1}</Text>
+                        </View>
+                        <Text style={styles.choiceText}>&ldquo;{choice.choice_text}&rdquo;</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+              </ScrollView>
+            </Animated.View>
+          </Animated.View>
         )}
       </View>
     </SafeAreaView>
@@ -221,17 +325,6 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     marginBottom: 12, // espacio antes del botón
   },
-  clearAllBtn: {
-    backgroundColor: "rgba(255, 107, 107, 0.9)",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  clearAllText: { color: "#fff", fontWeight: "700" },
-
   listContainer: { padding: 20, paddingBottom: 100 },
 
   storyItem: {
@@ -261,7 +354,13 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 4,
   },
-  lastPlayed: { fontSize: 12, color: "#666", marginBottom: 8 },
+  lastPlayed: { fontSize: 12, color: "#666", marginBottom: 4 },
+  statusText: { fontSize: 12, color: "#4ECDC4", marginBottom: 8, fontWeight: "600" },
+  modalStatusText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 
   summaryBox: {
     backgroundColor: "#F1FFF9",
@@ -277,39 +376,58 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   summaryText: { fontSize: 12, color: "#2E7D32" },
-  endingText: { fontSize: 12, color: "#555", marginBottom: 8 },
-
-  progressContainer: { flexDirection: "row", alignItems: "center", gap: 8 },
-  progressBar: {
-    flex: 1,
-    height: 4,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 2,
-  },
-  progressFill: { height: "100%", backgroundColor: "#4ECDC4", borderRadius: 2 },
-  progressText: { fontSize: 12, color: "#666", minWidth: 35 },
 
   actions: {
     justifyContent: "center",
     alignItems: "center",
     paddingLeft: 10,
-    gap: 8,
   },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFECEC",
-  },
-  playButton: {
-    backgroundColor: "#FF6B6B",
+  detailsButton: {
+    backgroundColor: "#F0F9FF",
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#4ECDC4",
+  },
+
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+    marginTop: 10,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#FF6B6B",
+    fontWeight: "600",
+    marginTop: 10,
+    textAlign: "center",
+  },
+  retryButton: {
+    backgroundColor: "#4ECDC4",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 15,
+    marginTop: 15,
+  },
+  retryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
 
   emptyState: {
@@ -330,5 +448,128 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     lineHeight: 22,
+  },
+
+  // Estilos del modal espectacular
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    flex: 1,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    maxHeight: height * 0.85,
+    minHeight: height * 0.6,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 15,
+  },
+  modalHeaderContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+  },
+  dateText: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 14,
+  },
+  modalBody: {
+    flex: 1,
+  },
+  modalScrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  choicesCount: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  choicesContainer: {
+    marginBottom: 20,
+  },
+  choiceItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 15,
+    backgroundColor: '#F8F9FA',
+    padding: 15,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  choiceNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#4ECDC4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+    marginTop: 2,
+  },
+  choiceNumberText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  choiceText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#333',
+    lineHeight: 22,
+  },
+  moreChoices: {
+    textAlign: 'center',
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 8,
   },
 });
